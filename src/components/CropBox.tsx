@@ -1,12 +1,7 @@
-// src/components/CropBox.tsx
+// src/components/CropBox.tsx (Optimized for Stability)
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
 import { CropRegion, ImageDimensions } from '../types';
 import { CropHandles } from './CropHandles';
 import { constrainCropRegion } from '../utils/imageUtils';
@@ -27,33 +22,17 @@ export const CropBox: React.FC<CropBoxProps> = ({
   displayDimensions,
 }) => {
   const scale = displayDimensions.width / imageDimensions.width;
-  
-  // Shared values for smooth animations
-  const translationX = useSharedValue(cropRegion.x * scale);
-  const translationY = useSharedValue(cropRegion.y * scale);
-  const width = useSharedValue(cropRegion.width * scale);
-  const height = useSharedValue(cropRegion.height * scale);
 
-  // Pan gesture for moving the crop box
+  // Pan gesture for moving the crop box - simplified for stability
   const panGesture = Gesture.Pan()
+    .minDistance(5) // Avoid over-sensitive responses
     .onUpdate((event) => {
-      const newX = event.translationX + cropRegion.x * scale;
-      const newY = event.translationY + cropRegion.y * scale;
+      const deltaX = event.translationX / scale;
+      const deltaY = event.translationY / scale;
 
-      // Constrain to image bounds
-      translationX.value = Math.max(
-        0,
-        Math.min(newX, displayDimensions.width - width.value)
-      );
-      translationY.value = Math.max(
-        0,
-        Math.min(newY, displayDimensions.height - height.value)
-      );
-    })
-    .onEnd(() => {
       const newRegion: CropRegion = {
-        x: translationX.value / scale,
-        y: translationY.value / scale,
+        x: cropRegion.x + deltaX,
+        y: cropRegion.y + deltaY,
         width: cropRegion.width,
         height: cropRegion.height,
       };
@@ -64,22 +43,11 @@ export const CropBox: React.FC<CropBoxProps> = ({
         CONSTANTS.MIN_CROP_SIZE
       );
 
-      logger.cropBoxDragged({ x: constrained.x, y: constrained.y });
-      onCropChange(constrained);
-
-      // Snap to constrained position
-      translationX.value = withSpring(constrained.x * scale);
-      translationY.value = withSpring(constrained.y * scale);
+      if (constrained.x !== cropRegion.x || constrained.y !== cropRegion.y) {
+        logger.cropBoxDragged({ x: constrained.x, y: constrained.y });
+        onCropChange(constrained);
+      }
     });
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translationX.value },
-      { translateY: translationY.value },
-    ],
-    width: width.value,
-    height: height.value,
-  }));
 
   const handleResize = (corner: string, deltaX: number, deltaY: number) => {
     const newRegion = { ...cropRegion };
@@ -115,16 +83,10 @@ export const CropBox: React.FC<CropBoxProps> = ({
 
     logger.cropBoxResized(constrained);
     onCropChange(constrained);
-
-    // Update animated values
-    translationX.value = constrained.x * scale;
-    translationY.value = constrained.y * scale;
-    width.value = constrained.width * scale;
-    height.value = constrained.height * scale;
   };
 
   return (
-    <View 
+    <View
       style={[
         styles.container,
         {
@@ -135,7 +97,19 @@ export const CropBox: React.FC<CropBoxProps> = ({
       pointerEvents="box-none"
     >
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.cropBox, animatedStyle]}>
+        <View
+          style={[
+            styles.cropBox,
+            {
+              transform: [
+                { translateX: cropRegion.x * scale },
+                { translateY: cropRegion.y * scale },
+              ],
+              width: cropRegion.width * scale,
+              height: cropRegion.height * scale,
+            }
+          ]}
+        >
           <View style={styles.border} />
           <View style={styles.corners}>
             <View style={[styles.corner, styles.topLeft]} />
@@ -144,7 +118,7 @@ export const CropBox: React.FC<CropBoxProps> = ({
             <View style={[styles.corner, styles.bottomRight]} />
           </View>
           <CropHandles onResize={handleResize} />
-        </Animated.View>
+        </View>
       </GestureDetector>
     </View>
   );

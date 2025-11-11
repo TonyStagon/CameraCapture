@@ -1,13 +1,9 @@
-// FILE: src/components/CropHandles.tsx (FIXED - Better Touch Response)
+// FILE: src/components/CropHandles.tsx (FIXED - Stable Gesture Handling)
 // ============================================
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle,
-  runOnJS,
-} from 'react-native-reanimated';
+import { runOnJS } from 'react-native-reanimated';
 import { CONSTANTS } from '../utils/constants';
 
 interface CropHandlesProps {
@@ -15,56 +11,49 @@ interface CropHandlesProps {
 }
 
 export const CropHandles: React.FC<CropHandlesProps> = ({ onResize }) => {
+  // Simplified and more stable gestures
   const createHandleGesture = (corner: string) => {
-    const startX = useSharedValue(0);
-    const startY = useSharedValue(0);
-
     return Gesture.Pan()
-      .onStart(() => {
-        startX.value = 0;
-        startY.value = 0;
-      })
+      .minDistance(2) // Minimize jitter
       .onUpdate((event) => {
-        const deltaX = event.translationX - startX.value;
-        const deltaY = event.translationY - startY.value;
-        
         runOnJS(onResize)(corner, event.translationX, event.translationY);
-        
-        startX.value = event.translationX;
-        startY.value = event.translationY;
+      })
+      .onEnd(() => {
+        // Reset gesture state
+        runOnJS(onResize)(corner, 0, 0);
       });
   };
 
   return (
     <>
       <GestureDetector gesture={createHandleGesture('topLeft')}>
-        <Animated.View style={[styles.handle, styles.topLeft]}>
+        <View style={[styles.handle, styles.topLeft]}>
           <View style={styles.handleDot} />
-        </Animated.View>
+        </View>
       </GestureDetector>
 
       <GestureDetector gesture={createHandleGesture('topRight')}>
-        <Animated.View style={[styles.handle, styles.topRight]}>
+        <View style={[styles.handle, styles.topRight]}>
           <View style={styles.handleDot} />
-        </Animated.View>
+        </View>
       </GestureDetector>
 
       <GestureDetector gesture={createHandleGesture('bottomLeft')}>
-        <Animated.View style={[styles.handle, styles.bottomLeft]}>
+        <View style={[styles.handle, styles.bottomLeft]}>
           <View style={styles.handleDot} />
-        </Animated.View>
+        </View>
       </GestureDetector>
 
       <GestureDetector gesture={createHandleGesture('bottomRight')}>
-        <Animated.View style={[styles.handle, styles.bottomRight]}>
+        <View style={[styles.handle, styles.bottomRight]}>
           <View style={styles.handleDot} />
-        </Animated.View>
+        </View>
       </GestureDetector>
     </>
   );
 };
 
-const HANDLE_SIZE = CONSTANTS.HANDLE_SIZE;
+const HANDLE_SIZE = 40; // Increased size for better Android touch
 
 const styles = StyleSheet.create({
   handle: {
@@ -73,12 +62,15 @@ const styles = StyleSheet.create({
     height: HANDLE_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Better visibility
   },
   handleDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: 'transparent',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#333', // Better visibility
   },
   topLeft: {
     top: -HANDLE_SIZE / 2,
