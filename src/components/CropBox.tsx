@@ -1,5 +1,5 @@
-// src/components/CropBox.tsx (Optimized for Stability)
-import React from 'react';
+// src/components/CropBox.tsx (Fixed - Proper Delta Handling)
+import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { CropRegion, ImageDimensions } from '../types';
@@ -22,13 +22,21 @@ export const CropBox: React.FC<CropBoxProps> = ({
   displayDimensions,
 }) => {
   const scale = displayDimensions.width / imageDimensions.width;
+  const lastTranslation = useRef({ x: 0, y: 0 });
 
-  // Pan gesture for moving the crop box - simplified for stability
   const panGesture = Gesture.Pan()
-    .minDistance(5) // Avoid over-sensitive responses
+    .minDistance(5)
+    .onStart(() => {
+      lastTranslation.current = { x: 0, y: 0 };
+    })
     .onUpdate((event) => {
-      const deltaX = event.translationX / scale;
-      const deltaY = event.translationY / scale;
+      const deltaX = (event.translationX - lastTranslation.current.x) / scale;
+      const deltaY = (event.translationY - lastTranslation.current.y) / scale;
+
+      lastTranslation.current = {
+        x: event.translationX,
+        y: event.translationY
+      };
 
       const newRegion: CropRegion = {
         x: cropRegion.x + deltaX,
@@ -47,6 +55,9 @@ export const CropBox: React.FC<CropBoxProps> = ({
         logger.cropBoxDragged({ x: constrained.x, y: constrained.y });
         onCropChange(constrained);
       }
+    })
+    .onEnd(() => {
+      lastTranslation.current = { x: 0, y: 0 };
     });
 
   const handleResize = (corner: string, deltaX: number, deltaY: number) => {

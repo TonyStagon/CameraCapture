@@ -1,26 +1,35 @@
-// FILE: src/components/CropHandles.tsx (FIXED - Stable Gesture Handling)
+// FILE: src/components/CropHandles.tsx (FIXED - Proper Delta Tracking)
 // ============================================
-import React from 'react';
+import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
-import { CONSTANTS } from '../utils/constants';
 
 interface CropHandlesProps {
   onResize: (corner: string, deltaX: number, deltaY: number) => void;
 }
 
 export const CropHandles: React.FC<CropHandlesProps> = ({ onResize }) => {
-  // Simplified and more stable gestures
   const createHandleGesture = (corner: string) => {
+    const lastTranslation = useRef({ x: 0, y: 0 });
+
     return Gesture.Pan()
-      .minDistance(2) // Minimize jitter
+      .minDistance(3)
+      .onStart(() => {
+        lastTranslation.current = { x: 0, y: 0 };
+      })
       .onUpdate((event) => {
-        runOnJS(onResize)(corner, event.translationX, event.translationY);
+        const deltaX = event.translationX - lastTranslation.current.x;
+        const deltaY = event.translationY - lastTranslation.current.y;
+        
+        lastTranslation.current = {
+          x: event.translationX,
+          y: event.translationY
+        };
+        
+        onResize(corner, deltaX, deltaY);
       })
       .onEnd(() => {
-        // Reset gesture state
-        runOnJS(onResize)(corner, 0, 0);
+        lastTranslation.current = { x: 0, y: 0 };
       });
   };
 
@@ -53,7 +62,7 @@ export const CropHandles: React.FC<CropHandlesProps> = ({ onResize }) => {
   );
 };
 
-const HANDLE_SIZE = 40; // Increased size for better Android touch
+const HANDLE_SIZE = 44;
 
 const styles = StyleSheet.create({
   handle: {
@@ -62,15 +71,20 @@ const styles = StyleSheet.create({
     height: HANDLE_SIZE,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Better visibility
+    backgroundColor: 'transparent',
   },
   handleDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
     backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: '#333', // Better visibility
+    borderWidth: 2,
+    borderColor: '#4A90E2',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
   topLeft: {
     top: -HANDLE_SIZE / 2,
