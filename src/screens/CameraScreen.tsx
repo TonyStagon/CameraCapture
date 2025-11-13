@@ -1,4 +1,4 @@
-// src/screens/CameraScreen.tsx (SDK 50 Compatible)
+// src/screens/CameraScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, Alert } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
@@ -7,6 +7,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { logger } from '../services/logging';
 import { COLORS } from '../utils/constants';
+import { BottomNavigation } from '../components/BottomNavigation';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -82,9 +83,17 @@ export default function CameraScreen() {
     }
   };
 
+  const handleNavigation = (route: 'search' | 'camera' | 'profile') => {
+    if (route === 'search') {
+      Alert.alert('Search', 'Search feature coming soon');
+    } else if (route === 'profile') {
+      Alert.alert('Profile', 'Profile feature coming soon');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <Camera 
+      <Camera
         ref={cameraRef}
         style={styles.camera}
         type={CameraType.back}
@@ -101,13 +110,27 @@ export default function CameraScreen() {
             <Text style={styles.instructionText}>Take a pic and get{'\n'}an answer</Text>
           </View>
 
-          <View style={styles.bottomBar}>
-            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-              <View style={styles.captureButtonInner} />
+          <View style={styles.bottomSpacer} />
+
+          {/* Circular Capture Button */}
+          <View style={styles.captureContainer}>
+            <TouchableOpacity
+              style={styles.captureButton}
+              onPress={takePicture}
+              activeOpacity={0.8}
+            >
+              <View style={styles.captureButtonOuter}>
+                <View style={styles.captureButtonInner} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
       </Camera>
+      
+      <BottomNavigation
+        currentRoute="camera"
+        onNavigate={handleNavigation}
+      />
     </View>
   );
 }
@@ -116,7 +139,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    justifyContent: 'center',
   },
   message: {
     textAlign: 'center',
@@ -178,17 +200,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-  bottomBar: {
-    paddingBottom: 50,
+  bottomSpacer: {
+    height: 80,
+  },
+  captureContainer: {
+    position: 'absolute',
+    bottom: 130,
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   captureButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  captureButtonOuter: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   captureButtonInner: {
     width: 60,
