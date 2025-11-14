@@ -115,12 +115,13 @@ export default function CameraScreen() {
           {/* Circular Capture Button */}
           <View style={styles.captureContainer}>
             <TouchableOpacity
-              style={styles.captureButton}
               onPress={takePicture}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
             >
-              <View style={styles.captureButtonOuter}>
-                <View style={styles.captureButtonInner} />
+              <View style={styles.outerRing}>
+                <View style={styles.middleRing}>
+                  <View style={styles.innerCircle} />
+                </View>
               </View>
             </TouchableOpacity>
           </View>
@@ -211,24 +212,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  captureButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  captureButtonOuter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#FFFFFF',
-  },
-  captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: COLORS.white,
-  },
+outerRing: {
+  width: 90,
+  height: 90,
+  borderRadius: 9999,
+  backgroundColor: 'transparent',
+  justifyContent: 'center',
+  alignItems: 'center',
+  borderWidth: 6,
+  borderColor: 'transparent',
+},
+middleRing: {
+  width: 80,
+  height: 80,
+  borderRadius: 9999,
+  backgroundColor: 'transparent',
+  borderWidth: 2,
+  borderColor: 'white',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+innerCircle: {
+  width: 60,
+  height: 60,
+  borderRadius: 9999,
+  backgroundColor: '#5FA8A8',
+},
 });
