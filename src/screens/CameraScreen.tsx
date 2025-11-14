@@ -8,6 +8,7 @@ import { RootStackParamList } from '../types';
 import { logger } from '../services/logging';
 import { COLORS } from '../utils/constants';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { Ionicons } from '@expo/vector-icons';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
@@ -83,11 +84,19 @@ export default function CameraScreen() {
     }
   };
 
+  const handleGalleryPress = () => {
+    Alert.alert('Gallery', 'Gallery picker coming soon!\n\nInstall expo-image-picker to enable this feature.');
+  };
+
+  const handleMicPress = () => {
+    Alert.alert('Voice Input', 'Voice input coming soon!\n\nInstall expo-av to enable voice recording.');
+  };
+
   const handleNavigation = (route: 'search' | 'camera' | 'profile') => {
     if (route === 'search') {
-      Alert.alert('Search', 'Search feature coming soon');
+      navigation.navigate('Search');
     } else if (route === 'profile') {
-      Alert.alert('Profile', 'Profile feature coming soon');
+      navigation.navigate('Profile');
     }
   };
 
@@ -112,8 +121,20 @@ export default function CameraScreen() {
 
           <View style={styles.bottomSpacer} />
 
-          {/* Circular Capture Button */}
+          {/* Bottom Controls with Gallery, Capture, and Mic */}
           <View style={styles.captureContainer}>
+            {/* Gallery Icon Button */}
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleGalleryPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButtonInner}>
+                <Ionicons name="images-outline" size={28} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+
+            {/* Circular Capture Button */}
             <TouchableOpacity
               onPress={takePicture}
               activeOpacity={0.7}
@@ -122,6 +143,17 @@ export default function CameraScreen() {
                 <View style={styles.middleRing}>
                   <View style={styles.innerCircle} />
                 </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Microphone Icon Button */}
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleMicPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButtonInner}>
+                <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
               </View>
             </TouchableOpacity>
           </View>
@@ -209,33 +241,50 @@ const styles = StyleSheet.create({
     bottom: 130,
     left: 0,
     right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 40,
   },
-outerRing: {
-  width: 90,
-  height: 90,
-  borderRadius: 9999,
-  backgroundColor: 'transparent',
-  justifyContent: 'center',
-  alignItems: 'center',
-  borderWidth: 6,
-  borderColor: 'transparent',
-},
-middleRing: {
-  width: 80,
-  height: 80,
-  borderRadius: 9999,
-  backgroundColor: 'transparent',
-  borderWidth: 2,
-  borderColor: 'white',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-innerCircle: {
-  width: 60,
-  height: 60,
-  borderRadius: 9999,
-  backgroundColor: '#5FA8A8',
-},
+  iconButton: {
+    width: 50,
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 30,
+  },
+  iconButtonInner: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  outerRing: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 6,
+    borderColor: 'transparent',
+  },
+  middleRing: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#5FA8A8',
+  },
 });
