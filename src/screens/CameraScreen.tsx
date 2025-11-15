@@ -228,15 +228,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 100,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(10, 6, 6, 0.49)',
   },
   gradientBottom: {
     position: 'absolute',
-    top: 250,
+    top: 170,
     left: 0,
     right: 0,
-    bottom: 0,
-    backgroundColor: '#000000',
+    bottom: 10,
+    backgroundColor: '#8a1616ff',
   },
   topBar: {
     paddingTop: 50,
@@ -279,7 +279,7 @@ const styles = StyleSheet.create({
   },
   captureContainer: {
     position: 'absolute',
-    bottom: 130,
+    bottom: 100,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -289,16 +289,16 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   iconButton: {
-    width: 50,
-    height: 50,
+    width: 62.5,  // Increased by 25% (50 * 1.25 = 62.5)
+    height: 62.5, // Increased by 25% (50 * 1.25 = 62.5)
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 30,
   },
   iconButtonInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 62.5,  // Increased by 25% (50 * 1.25 = 62.5)
+    height: 62.5, // Increased by 25% (50 * 1.25 = 62.5)
+    borderRadius: 31.25, // Adjusted for new size (62.5 / 2)
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
