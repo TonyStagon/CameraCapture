@@ -17,7 +17,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 // Footer includes gradient (60px) + buttons (70px) + bottom nav (90px) = 220px total
-const FOOTER_HEIGHT = 250;
+const FOOTER_HEIGHT = 230;
 const BOTTOM_NAV_HEIGHT = 90;
 
 // This is the area where crop box can move
@@ -376,19 +376,19 @@ const styles = StyleSheet.create({
   },
   gradientOverlay: {
     position: 'absolute',
-    top: 0,
+   top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
+    backgroundColor:  'rgba(0, 255, 0, 0)',
   },
   gradientTop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 40,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
+    height: 20,
+    backgroundColor: 'rgba(20, 160, 160, 0.8)',
   },
   gradientMiddle: {
     position: 'absolute',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   gradientBottom: {
     position: 'absolute',
-    top: 60,
+    top: 30,
     left: 0,
     right: 0,
     bottom: 0,
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     borderTopWidth: 1,
-    borderTopColor: '#ffffff',
+    borderTopColor: '#ac0d0dff',
   },
   topBar: {
     position: 'absolute',
@@ -457,8 +457,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    paddingTop: 80,
+    paddingTop: 45,
     paddingBottom: 10,
+ 
     zIndex: 8,
     backgroundColor: 'transparent',
   },

@@ -1,4 +1,4 @@
-// src/components/CropBox.tsx (Fixed - Proper Delta Handling)
+// src/components/CropBox.tsx (Fixed - Proper Delta Handling + Dimming Effect)
 import React, { useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
@@ -25,6 +25,14 @@ export const CropBox: React.FC<CropBoxProps> = ({
 }) => {
   const scale = displayDimensions.width / imageDimensions.width;
   const lastTranslation = useRef({ x: 0, y: 0 });
+
+  // Calculate scaled crop box dimensions for overlay
+  const scaledCropBox = {
+    x: cropRegion.x * scale,
+    y: cropRegion.y * scale,
+    width: cropRegion.width * scale,
+    height: cropRegion.height * scale,
+  };
 
   const panGesture = Gesture.Pan()
     .minDistance(5)
@@ -111,6 +119,63 @@ export const CropBox: React.FC<CropBoxProps> = ({
       ]}
       pointerEvents="box-none"
     >
+      {/* Dark overlay masks - darken everything outside crop box */}
+      {/* Top mask */}
+      <View 
+        style={[
+          styles.overlayMask,
+          {
+            top: 0,
+            left: 0,
+            width: displayDimensions.width,
+            height: scaledCropBox.y,
+          }
+        ]}
+        pointerEvents="none"
+      />
+      
+      {/* Left mask */}
+      <View 
+        style={[
+          styles.overlayMask,
+          {
+            top: scaledCropBox.y,
+            left: 0,
+            width: scaledCropBox.x,
+            height: scaledCropBox.height,
+          }
+        ]}
+        pointerEvents="none"
+      />
+      
+      {/* Right mask */}
+      <View 
+        style={[
+          styles.overlayMask,
+          {
+            top: scaledCropBox.y,
+            left: scaledCropBox.x + scaledCropBox.width,
+            width: displayDimensions.width - (scaledCropBox.x + scaledCropBox.width),
+            height: scaledCropBox.height,
+          }
+        ]}
+        pointerEvents="none"
+      />
+      
+      {/* Bottom mask */}
+      <View 
+        style={[
+          styles.overlayMask,
+          {
+            top: scaledCropBox.y + scaledCropBox.height,
+            left: 0,
+            width: displayDimensions.width,
+            height: displayDimensions.height - (scaledCropBox.y + scaledCropBox.height),
+          }
+        ]}
+        pointerEvents="none"
+      />
+
       <GestureDetector gesture={panGesture}>
         <View
           style={[
@@ -143,10 +208,14 @@ const styles = StyleSheet.create({
   container: {
     position: 'absolute',
   },
+  overlayMask: {
+    position: 'absolute',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', // Dark overlay - 60% opacity
+  },
   cropBox: {
     position: 'absolute',
-    borderWidth: CONSTANTS.CROP_BORDER_WIDTH,
-    borderColor: COLORS.cropBox,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)', // White border to stand out
   },
   border: {
     position: 'absolute',

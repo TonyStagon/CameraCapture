@@ -27,7 +27,7 @@ type RoutePropType = RouteProp<RootStackParamList, 'Crop'>;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const FOOTER_HEIGHT = 160;
+const FOOTER_HEIGHT = 180;
 const BOTTOM_NAV_HEIGHT = 90;
 
 export default function CropScreen() {
