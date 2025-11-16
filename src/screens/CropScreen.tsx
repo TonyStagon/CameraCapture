@@ -15,6 +15,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, CropRegion } from '../types';
 import { CropBox } from '../components/CropBox';
 import { ToggleButton } from '../components/ToggleButton';
+import { BottomNavigation } from '../components/BottomNavigation';
 import { cropDetectionService } from '../services/cropDetection';
 import { imageProcessor } from '../services/imageProcessor';
 import { logger } from '../services/logging';
@@ -26,6 +27,8 @@ type RoutePropType = RouteProp<RootStackParamList, 'Crop'>;
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
+const FOOTER_HEIGHT = 160;
+const BOTTOM_NAV_HEIGHT = 90;
 
 export default function CropScreen() {
   const navigation = useNavigation<NavigationProp>();
@@ -107,14 +110,18 @@ export default function CropScreen() {
     Alert.alert('Voice Input', 'Voice input coming soon!');
   };
 
+  const handleNavigation = (route: 'search' | 'camera' | 'profile') => {
+    if (route === 'search') {
+      navigation.navigate('Search' as never);
+    } else if (route === 'camera') {
+      navigation.navigate('Camera' as never);
+    } else if (route === 'profile') {
+      navigation.navigate('Profile' as never);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Gradient overlay for top section */}
-      <View style={styles.topGradientOverlay}>
-        <View style={styles.topGradientTop} />
-        <View style={styles.topGradientBottom} />
-      </View>
-
       <View style={styles.topBar}>
         <TouchableOpacity style={styles.backButton} onPress={handleRetake}>
           <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
@@ -144,61 +151,60 @@ export default function CropScreen() {
         )}
       </View>
 
-      {/* Bottom gradient and controls */}
-      <View style={styles.bottomSection}>
+      {/* Footer - Same as CameraScreen */}
+      <View style={styles.footerWrapper}>
+        {/* Gradient overlay with rounded top border */}
         <View style={styles.gradientOverlay}>
           <View style={styles.gradientTop} />
           <View style={styles.gradientMiddle} />
           <View style={styles.gradientBottom} />
         </View>
 
-        <View style={styles.controlsWrapper}>
-          <ToggleButton 
-            autoMode={autoMode} 
-            onToggle={handleToggleMode}
-          />
+        {/* Capture/Confirm Buttons */}
+        <View style={styles.captureContainer}>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleRetake}
+            activeOpacity={0.7}
+          >
+            <View style={styles.iconButtonInner}>
+              <Ionicons name="close" size={32} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
 
-          {/* Action buttons with icons */}
-          <View style={styles.captureContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleGalleryPress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconButtonInner}>
-                <Ionicons name="images-outline" size={28} color="#FFFFFF" />
+          <TouchableOpacity
+            onPress={handleConfirm}
+            activeOpacity={0.7}
+            disabled={isProcessing}
+          >
+            <View style={styles.outerRing}>
+              <View style={styles.middleRing}>
+                {isProcessing ? (
+                  <ActivityIndicator color="#FFFFFF" size="large" />
+                ) : (
+                  <View style={styles.innerCircle}>
+                    <Ionicons name="checkmark" size={32} color="#FFFFFF" />
+                  </View>
+                )}
               </View>
-            </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={handleConfirm}
-              activeOpacity={0.7}
-              disabled={isProcessing}
-            >
-              <View style={styles.outerRing}>
-                <View style={styles.middleRing}>
-                  {isProcessing ? (
-                    <ActivityIndicator color="#FFFFFF" size="large" />
-                  ) : (
-                    <View style={styles.innerCircle}>
-                      <Ionicons name="checkmark" size={32} color="#FFFFFF" />
-                    </View>
-                  )}
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleMicPress}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconButtonInner}>
-                <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={handleMicPress}
+            activeOpacity={0.7}
+          >
+            <View style={styles.iconButtonInner}>
+              <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
+            </View>
+          </TouchableOpacity>
         </View>
+
+        <BottomNavigation
+          currentRoute="camera"
+          onNavigate={handleNavigation}
+        />
       </View>
     </View>
   );
@@ -214,7 +220,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 150,
+    height: 10,
     zIndex: 1,
   },
   topGradientTop: {
@@ -231,7 +237,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 50,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: 'rgba(0, 0, 0, 0)',
   },
   topBar: {
     position: 'absolute',
@@ -289,69 +295,76 @@ const styles = StyleSheet.create({
   image: {
     backgroundColor: '#1a1a1a',
   },
-  bottomSection: {
+  footerWrapper: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 300,
+    width: '100%',
+    height: FOOTER_HEIGHT,
+    zIndex: 999,
+    backgroundColor: 'transparent',
   },
   gradientOverlay: {
     position: 'absolute',
-    top: 0,
+    top: 10,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 0,
+    backgroundColor: 'transparent',
   },
   gradientTop: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 80,
-    backgroundColor: 'rgba(0, 0, 0, 0)',
+    height: 0,
+    backgroundColor: 'rgba(6, 194, 31, 0)',
+    zIndex: -1,
   },
   gradientMiddle: {
     position: 'absolute',
-    top: 80,
+    top: 0,
     left: 0,
     right: 0,
-    height: 70,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    height: 30,
+    backgroundColor: 'rgba(167, 201, 17, 0)',
+    zIndex: -1,
   },
   gradientBottom: {
     position: 'absolute',
-    top: 150,
+    top: -40,
     left: 0,
     right: 0,
-    bottom: 0,
+    bottom: -90,
     backgroundColor: '#000000',
-  },
-  controlsWrapper: {
-    position: 'relative',
-    zIndex: 1,
-    paddingTop: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ffffff',
+    zIndex: -1,
   },
   captureContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    marginTop: 30,
+    paddingTop: 0,
+    paddingBottom: 80,
+    zIndex: 10,
   },
   iconButton: {
-    width: 50,
-    height: 50,
+    width: 62.5,
+    height: 62.5,
     justifyContent: 'center',
     alignItems: 'center',
     marginHorizontal: 30,
   },
   iconButtonInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#333',
+    width: 62.5,
+    height: 62.5,
+    borderRadius: 31.25,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
   },
