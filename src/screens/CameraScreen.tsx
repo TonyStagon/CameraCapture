@@ -1,4 +1,4 @@
-// src/screens/CameraScreen.tsx
+// src/screens/CameraScreen.tsx - COMPLETE UPDATED VERSION
 import React, { useState, useRef, useEffect } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, Alert, Image, Dimensions, Platform } from 'react-native';
 import { Camera, CameraType } from 'expo-camera';
@@ -8,6 +8,7 @@ import { RootStackParamList, CropRegion, ImageDimensions } from '../types';
 import { logger } from '../services/logging';
 import { COLORS } from '../utils/constants';
 import { BottomNavigation } from '../components/BottomNavigation';
+import { SubjectSelectionModal } from '../components/SubjectSelectionModal';
 import { Ionicons } from '@expo/vector-icons';
 import { CropBox } from '../components/CropBox';
 
@@ -16,13 +17,10 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 
-// Footer includes gradient (60px) + buttons (70px) + bottom nav (90px) = 220px total
-const FOOTER_HEIGHT = 230;
+const FOOTER_HEIGHT = 250;
 const BOTTOM_NAV_HEIGHT = 90;
 
-// This is the area where crop box can move
 const AVAILABLE_HEIGHT = SCREEN_HEIGHT - FOOTER_HEIGHT;
-
 
 export default function CameraScreen() {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -34,6 +32,9 @@ export default function CameraScreen() {
     width: 0,
     height: 0,
   });
+  const [showSubjectModal, setShowSubjectModal] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
+  
   const cameraRef = useRef<Camera>(null);
   const navigation = useNavigation<NavigationProp>();
 
@@ -50,27 +51,22 @@ export default function CameraScreen() {
     })();
   }, []);
 
-  // Initialize crop box with proper dimensions when photo is captured
   useEffect(() => {
     if (capturedPhoto) {
-      // Calculate display dimensions that fit in available height
       const aspectRatio = capturedPhoto.dimensions.width / capturedPhoto.dimensions.height;
       let displayWidth = SCREEN_WIDTH;
       let displayHeight = SCREEN_WIDTH / aspectRatio;
 
-      // If image is too tall, constrain by height instead
-      if (displayHeight > AVAILABLE_HEIGHT) {
-        displayHeight = AVAILABLE_HEIGHT;
+      if (displayHeight > SCREEN_HEIGHT) {
+        displayHeight = SCREEN_HEIGHT;
         displayWidth = displayHeight * aspectRatio;
       }
 
       setDisplayDimensions({ width: displayWidth, height: displayHeight });
 
-      // Set initial crop box size - smaller than before (60% of image)
       const cropWidth = capturedPhoto.dimensions.width * 0.6;
       const cropHeight = capturedPhoto.dimensions.height * 0.4;
       
-      // Center the crop box initially
       const cropX = (capturedPhoto.dimensions.width - cropWidth) / 2;
       const cropY = (capturedPhoto.dimensions.height - cropHeight) / 2;
 
@@ -126,7 +122,6 @@ export default function CameraScreen() {
         });
         logger.photoCaptureEnd();
 
-        // Set captured photo state to show crop UI
         setCapturedPhoto({
           uri: photo.uri,
           dimensions: { width: photo.width, height: photo.height }
@@ -151,15 +146,23 @@ export default function CameraScreen() {
     setCapturedPhoto(null);
     setCropRegion({ x: 0, y: 0, width: 0, height: 0 });
     setDisplayDimensions({ width: 0, height: 0 });
+    setSelectedSubject(null);
   };
 
   const handleConfirm = () => {
     if (!capturedPhoto) return;
     logger.confirmCropTapped(cropRegion);
+    setShowSubjectModal(true);
+  };
+
+  const handleSubjectSelect = (subject: string) => {
+    setSelectedSubject(subject);
+    setShowSubjectModal(false);
+    
+    // Navigate to crop/preview screen with subject info
     navigation.navigate('Crop', {
-      photoUri: capturedPhoto.uri,
-      dimensions: capturedPhoto.dimensions,
-      initialCropRegion: cropRegion,
+      photoUri: capturedPhoto!.uri,
+      dimensions: capturedPhoto!.dimensions,
     });
   };
 
@@ -173,8 +176,7 @@ export default function CameraScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Preview Area - properly constrained to AVAILABLE_HEIGHT */}
-      <View style={[styles.previewArea, { height: AVAILABLE_HEIGHT }]}>
+      <View style={styles.previewArea}>
         {!capturedPhoto ? (
           <Camera
             ref={cameraRef}
@@ -182,10 +184,12 @@ export default function CameraScreen() {
             type={CameraType.back}
           >
             <View style={styles.topBar}>
+              <View style={styles.placeholder} />
               <View style={styles.brandContainer}>
                 <Text style={styles.brandEmoji}>🎁</Text>
                 <Text style={styles.brandText}>Get pro</Text>
               </View>
+              <View style={styles.placeholder} />
             </View>
 
             <View style={styles.centerContent}>
@@ -195,10 +199,14 @@ export default function CameraScreen() {
         ) : (
           <View style={styles.capturedPhotoWrapper}>
             <View style={styles.topBar}>
+              <TouchableOpacity style={styles.backButton} onPress={handleRetake}>
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              </TouchableOpacity>
               <View style={styles.brandContainer}>
                 <Text style={styles.brandEmoji}>🎁</Text>
                 <Text style={styles.brandText}>Get pro</Text>
               </View>
+              <View style={styles.placeholder} />
             </View>
 
             <View style={styles.imageContainer}>
@@ -219,101 +227,81 @@ export default function CameraScreen() {
                   onCropChange={setCropRegion}
                   imageDimensions={capturedPhoto.dimensions}
                   displayDimensions={displayDimensions}
-                  maxHeight={AVAILABLE_HEIGHT}
+                  maxHeight={SCREEN_HEIGHT}
                 />
               )}
+            </View>
+
+            {/* Confirm Button at Bottom */}
+            <View style={styles.confirmButtonContainer}>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.confirmButtonText}>Continue</Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
             </View>
           </View>
         )}
       </View>
 
-      {/* Footer - Always visible at bottom, fixed height */}
-      <View style={[styles.footerWrapper, { height: FOOTER_HEIGHT }]}>
-        {/* Gradient overlay with rounded top border */}
-        <View style={styles.gradientOverlay}>
-          <View style={styles.gradientTop} />
-          <View style={styles.gradientMiddle} />
-          <View style={styles.gradientBottom} />
+      {/* Footer - Only show when no photo is captured */}
+      {!capturedPhoto && (
+        <View style={[styles.footerWrapper, { height: FOOTER_HEIGHT }]}>
+          <View style={styles.gradientOverlay}>
+            <View style={styles.gradientTop} />
+            <View style={styles.gradientMiddle} />
+            <View style={styles.gradientBottom} />
+          </View>
+
+          <View style={styles.captureContainer}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleGalleryPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButtonInner}>
+                <Ionicons name="images-outline" size={28} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={takePicture}
+              activeOpacity={0.7}
+            >
+              <View style={styles.outerRing}>
+                <View style={styles.middleRing}>
+                  <View style={styles.innerCircle} />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleMicPress}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconButtonInner}>
+                <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <BottomNavigation
+            currentRoute="camera"
+            onNavigate={handleNavigation}
+          />
         </View>
+      )}
 
-        {/* Capture/Confirm Buttons */}
-        <View style={styles.captureContainer}>
-          {!capturedPhoto ? (
-            <>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleGalleryPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconButtonInner}>
-                  <Ionicons name="images-outline" size={28} color="#FFFFFF" />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={takePicture}
-                activeOpacity={0.7}
-              >
-                <View style={styles.outerRing}>
-                  <View style={styles.middleRing}>
-                    <View style={styles.innerCircle} />
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleMicPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconButtonInner}>
-                  <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
-                </View>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleRetake}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconButtonInner}>
-                  <Ionicons name="close" size={32} color="#FFFFFF" />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleConfirm}
-                activeOpacity={0.7}
-              >
-                <View style={styles.outerRing}>
-                  <View style={styles.middleRing}>
-                    <View style={styles.innerCircle}>
-                      <Ionicons name="checkmark" size={32} color="#FFFFFF" />
-                    </View>
-                  </View>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleMicPress}
-                activeOpacity={0.7}
-              >
-                <View style={styles.iconButtonInner}>
-                  <Ionicons name="mic-outline" size={28} color="#FFFFFF" />
-                </View>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-
-        <BottomNavigation
-          currentRoute="camera"
-          onNavigate={handleNavigation}
-        />
-      </View>
+      {/* Subject Selection Modal */}
+      <SubjectSelectionModal
+        visible={showSubjectModal}
+        onSelectSubject={handleSubjectSelect}
+        onClose={() => setShowSubjectModal(false)}
+      />
     </View>
   );
 }
@@ -343,6 +331,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   previewArea: {
+    flex: 1,
     width: '100%',
     backgroundColor: COLORS.background,
     position: 'relative',
@@ -363,52 +352,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    height: '100%',
     position: 'relative',
   },
   capturedImage: {
     backgroundColor: '#1a1a1a',
-  },
-  footerWrapper: {
-    width: '100%',
-    backgroundColor: 'transparent',
-    position: 'relative',
-  },
-  gradientOverlay: {
-    position: 'absolute',
-   top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor:  'rgba(0, 255, 0, 0)',
-  },
-  gradientTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 20,
-    backgroundColor: 'rgba(20, 160, 160, 0.8)',
-  },
-  gradientMiddle: {
-    position: 'absolute',
-    top: 40,
-    left: 0,
-    right: 0,
-    height: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  gradientBottom: {
-    position: 'absolute',
-    top: 30,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#000000',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#ac0d0dff',
   },
   topBar: {
     position: 'absolute',
@@ -417,9 +364,23 @@ const styles = StyleSheet.create({
     right: 0,
     paddingTop: Platform.OS === 'ios' ? 50 : 40,
     paddingHorizontal: 20,
+    paddingBottom: 20,
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     zIndex: 15,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholder: {
+    width: 44,
+    height: 44,
   },
   centerContent: {
     position: 'absolute',
@@ -452,14 +413,77 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
+  confirmButtonContainer: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+    zIndex: 20,
+  },
+  confirmButton: {
+    backgroundColor: '#007AFF',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  confirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  footerWrapper: {
+    width: '100%',
+    backgroundColor: 'transparent',
+    position: 'relative',
+  },
+  gradientOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+  },
+  gradientTop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 40,
+    backgroundColor: 'rgba(0, 0, 0, 0)',
+  },
+  gradientMiddle: {
+    position: 'absolute',
+    top: 40,
+    left: 0,
+    right: 0,
+    height: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  gradientBottom: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ffffff',
+  },
   captureContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
-    paddingTop: 45,
+    paddingTop: 80,
     paddingBottom: 10,
- 
     zIndex: 8,
     backgroundColor: 'transparent',
   },
